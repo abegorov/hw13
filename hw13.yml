@@ -1,0 +1,25 @@
+# HISTCONTROL=ignoreboth
+#  export AWS_ACCESS_KEY_ID=
+#  export AWS_SECRET_ACCESS_KEY=
+---
+- name: Prepare AWS infrastructure
+  hosts: localhost
+  gather_facts: false
+  module_defaults:
+    group/aws:
+      region: eu-central-1
+  vars:
+    # Canonical, Ubuntu, 20.04 LTS, amd64 focal image build on 2023-05-17
+    aws_ec2_ami: ami-0ab1a82de7ca5889c
+  roles:
+    - aws_infra
+
+- name: Build puzzle15 application
+  hosts: hw13-build
+  become: true
+  gather_facts: false
+  vars:
+    deployer_ssh_key_file: "{{ (hostvars['localhost'].aws_instances |
+      items2dict)['hw13-build'].ssh_key.file }}.pub"
+  roles:
+    - build_war

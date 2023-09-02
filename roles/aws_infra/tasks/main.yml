@@ -1,0 +1,57 @@
+---
+- name: Generate an OpenSSH ed25519 keypairs
+  community.crypto.openssh_keypair:
+    path: "{{ item.value.ssh_key.file }}"
+    type: ed25519
+  loop: "{{ aws_instances }}"
+  loop_control:
+    label: "{{ item.value.ssh_key.file }}"
+
+- name: Create keypairs using provided key_material
+  amazon.aws.ec2_key:
+    name: "{{ item.value.ssh_key.name }}"
+    key_material: "{{ lookup('ansible.builtin.file',
+      item.value.ssh_key.file + '.pub') }}"
+  loop: "{{ aws_instances }}"
+  loop_control:
+    label: "{{ item.value.ssh_key.name }}"
+
+- name: Create ec2 security groups
+  amazon.aws.ec2_security_group:
+    name: "{{ item.value.security_group.name }}"
+    description: "{{ item.value.security_group.description }}"
+    rules: "{{ item.value.security_group.rules }}"
+  loop: "{{ aws_instances }}"
+  loop_control:
+    label: "{{ item.value.security_group.name }}"
+
+- name: Provision EC2 instances with public IP addresses
+  amazon.aws.ec2_instance:
+    name: "{{ item.key }}"
+    key_name: "{{ item.value.ssh_key.name }}"
+    instance_type: t2.micro
+    security_group: "{{ item.value.security_group.name }}"
+    network:
+      assign_public_ip: true
+    image_id: "{{aws_ec2_ami}}"
+    state: running
+  loop: "{{ aws_instances }}"
+  loop_control:
+    label: "{{ item.key }}"
+  register: provision_results
+
+- name: Add EC2 instances to Ansible inventory
+  ansible.builtin.add_host:
+    hostname: "{{ item.tags.Name }}"
+    groups: ec2hosts
+    ansible_host: "{{ item.public_ip_address }}"
+    ansible_user: "{{ aws_ec2_ami_username }}"
+    ansible_ssh_private_key_file: "{{
+      (aws_instances | ansible.builtin.items2dict)[
+        item.tags.Name
+      ].ssh_key.file }}"
+    ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
+  loop: "{{ provision_results.results |
+      map(attribute='instances') | ansible.builtin.flatten(1) }}"
+  loop_control:
+    label: "{{ item.tags.Name }}"

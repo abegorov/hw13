@@ -1,0 +1,46 @@
+---
+- name: Install required packages
+  ansible.builtin.apt:
+    name:
+      - openjdk-11-jdk-headless
+      - maven
+      - git
+    update_cache: yes
+
+- name: Remove build directory
+  ansible.builtin.file:
+    path: "{{ build_dir }}"
+    state: absent
+
+- name: Clone puzzle15 repository
+  ansible.builtin.git:
+    repo: "{{ app_repo }}"
+    dest: "{{ build_dir }}"
+
+- name: Remove target directory
+  ansible.builtin.file:
+    path: "{{ build_dir }}/target"
+    state: absent
+
+- name: Set the packaging type to war
+  community.general.xml:
+    path: "{{ build_dir }}/pom.xml"
+    xpath: /project/packaging
+    value: war
+
+- name: Build application
+  ansible.builtin.shell: |
+    mvn clean
+    mvn package
+  args:
+    chdir: "{{ build_dir }}"
+
+- name: Create deployer user
+  ansible.builtin.user:
+    name: "{{ deployer_username }}"
+
+- name: Set authorized key taken from file
+  ansible.posix.authorized_key:
+    user: "{{ deployer_username }}"
+    key: "{{ lookup('ansible.builtin.file', deployer_ssh_key_file }}"
+    state: present

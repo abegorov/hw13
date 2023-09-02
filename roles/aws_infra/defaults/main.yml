@@ -1,0 +1,36 @@
+---
+# Canonical, Ubuntu, 20.04 LTS, amd64 focal image build on 2023-05-17
+aws_ec2_ami: ami-0ab1a82de7ca5889c
+aws_ec2_ami_username: ubuntu
+ssh_key_dir: "{{ lookup('ansible.builtin.env', 'HOME') }}/.ssh"
+aws_instances:
+  - key: hw13-build
+    value:
+      ssh_key:
+        name: hw13-build
+        file: "{{ ssh_key_dir }}/hw13-build.key"
+      security_group:
+        name: hw13-build
+        description: Allow ports 22
+        rules:
+          - proto: tcp
+            from_port: 22
+            to_port: 22
+            cidr_ip: 0.0.0.0/0
+  - key: hw13-app
+    value:
+      ssh_key:
+        name: hw13-app
+        file: "{{ ssh_key_dir }}/hw13-app.key"
+      security_group:
+        name: hw13-app
+        description: Allow ports 8080 and 22
+        rules:
+          - proto: tcp
+            from_port: 8080
+            to_port: 8080
+            cidr_ip: 0.0.0.0/0
+          - proto: tcp
+            from_port: 22
+            to_port: 22
+            cidr_ip: 0.0.0.0/0
