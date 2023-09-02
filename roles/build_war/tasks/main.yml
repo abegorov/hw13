@@ -54,5 +54,5 @@
 - name: Set authorized key taken from file
   ansible.posix.authorized_key:
     user: "{{ deployer_username }}"
-    key: "{{ lookup('ansible.builtin.file', deployer_ssh_key_file }}"
+    key: "{{ lookup('ansible.builtin.file', deployer_ssh_key_file) }}"
     state: present
