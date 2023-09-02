@@ -37,6 +37,8 @@
       value: 1.8
     - xpath: /POM:project/POM:properties/POM:maven.compiler.target
       value: 1.8
+    - xpath: /POM:project/POM:properties/POM:failOnMissingWebXml
+      value: "false"
 
 - name: Build application
   ansible.builtin.shell: |
