@@ -26,10 +26,17 @@
 - name: Set the packaging type to war
   community.general.xml:
     path: "{{ build_dir }}/pom.xml"
-    xpath: /POM:project/POM:packaging
     namespaces:
       POM: http://maven.apache.org/POM/4.0.0
-    value: war
+    xpath: "{{ item.xpath }}"
+    value: "{{ item.value }}"
+  loop:
+    - xpath: /POM:project/POM:packaging
+      value: war
+    - xpath: /POM:project/POM:properties/POM:maven.compiler.source
+      value: 1.8
+    - xpath: /POM:project/POM:properties/POM:maven.compiler.target
+      value: 1.8
 
 - name: Build application
   ansible.builtin.shell: |
