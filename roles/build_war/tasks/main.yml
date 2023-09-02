@@ -5,6 +5,7 @@
       - openjdk-11-jdk-headless
       - maven
       - git
+      - python3-lxml
     update_cache: yes
 
 - name: Remove build directory
