@@ -26,7 +26,9 @@
 - name: Set the packaging type to war
   community.general.xml:
     path: "{{ build_dir }}/pom.xml"
-    xpath: /project/packaging
+    xpath: /POM:project/POM:packaging
+    namespaces:
+      POM: http://maven.apache.org/POM/4.0.0
     value: war
 
 - name: Build application
