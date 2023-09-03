@@ -38,7 +38,7 @@
   loop: "{{ aws_instances }}"
   loop_control:
     label: "{{ item.key }}"
-  register: provision_results
+  register: provision_instances
 
 - name: Add EC2 instances to Ansible inventory
   ansible.builtin.add_host:
@@ -51,7 +51,7 @@
         item.tags.Name
       ].ssh_key.file }}"
     ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
-  loop: "{{ provision_results.results |
+  loop: "{{ provision_instances.results |
       map(attribute='instances') | ansible.builtin.flatten(1) }}"
   loop_control:
     label: "{{ item.tags.Name }}"

@@ -18,8 +18,12 @@
   hosts: hw13-build
   become: true
   gather_facts: false
-  vars:
-    deployer_ssh_key_file: "{{ (hostvars['localhost'].aws_instances |
-      items2dict)['hw13-build'].ssh_key.file }}.pub"
   roles:
     - build_war
+
+- name: Deploy puzzle15 application
+  hosts: hw13-app
+  become: true
+  gather_facts: false
+  roles:
+    - deploy_war

@@ -1,1 +1,45 @@
 ---
+- name: Install tomcat9
+  ansible.builtin.apt:
+    name:
+      - tomcat9
+      - rsync
+    update_cache: yes
+
+- name: Gather minimum facts for build_host
+  delegate_to: "{{ build_host }}"
+  delegate_facts: true
+  ansible.builtin.setup:
+    gather_subset: "!all"
+
+- name: Generate an OpenSSH ed25519 keypair
+  delegate_to: "{{ build_host }}"
+  community.crypto.openssh_keypair:
+    path: "{{ hostvars[build_host].ansible_env.HOME }}/.ssh/id_ed25519"
+    type: ed25519
+  register: ssh_keygen
+
+- name: Allow connection using authorized key taken from file
+  ansible.posix.authorized_key:
+    user: "{{ ansible_user }}"
+    key: "{{ ssh_keygen.public_key }}"
+    state: present
+
+- name: Deploy application war
+  delegate_to: "{{ build_host }}"
+  ansible.builtin.synchronize:
+    private_key: "{{ hostvars[build_host].ansible_env.HOME }}/.ssh/id_ed25519"
+    src: "{{ build_dir }}/target/."
+    rsync_opts:
+      - "--include='*.war'"
+      - "--exclude='*'"
+    dest: "/var/lib/tomcat9/webapps/"
+
+- name: Removing tomcat ROOT directory
+  ansible.builtin.file:
+    path: "/var/lib/tomcat9/webapps/ROOT"
+    state: absent
+
+- name: Print deployment address
+  ansible.builtin.debug:
+    msg: "http://{{ ansible_host }}:8080/"

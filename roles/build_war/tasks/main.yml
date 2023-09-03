@@ -6,6 +6,7 @@
       - maven
       - git
       - python3-lxml
+      - rsync
     update_cache: yes
 
 - name: Remove build directory
@@ -39,6 +40,8 @@
       value: 1.8
     - xpath: /POM:project/POM:properties/POM:failOnMissingWebXml
       value: "false"
+    - xpath: /POM:project/POM:build/POM:finalName
+      value: "{{ final_name }}"
 
 - name: Build application
   ansible.builtin.shell: |
@@ -46,13 +49,3 @@
     mvn package
   args:
     chdir: "{{ build_dir }}"
-
-- name: Create deployer user
-  ansible.builtin.user:
-    name: "{{ deployer_username }}"
-
-- name: Set authorized key taken from file
-  ansible.posix.authorized_key:
-    user: "{{ deployer_username }}"
-    key: "{{ lookup('ansible.builtin.file', deployer_ssh_key_file) }}"
-    state: present
